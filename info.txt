@@ -1,0 +1,6 @@
+After pull the project:
+  1- enter to the backend folder by command : cd backend
+  2- npm install
+  3- change sample.env to .env
+  4- add your own environements to .env
+  5- start the project by command : npm run dev
