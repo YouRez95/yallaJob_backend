@@ -3,6 +3,7 @@
 
 ### Node ###
 .env
+storage-firebase.json
 # Logs
 logs
 *.log
