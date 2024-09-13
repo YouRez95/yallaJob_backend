@@ -1,9 +1,9 @@
 import bucket from "../config/firebase"
 import {} from 'firebase-admin';
 
-export const uploadImageToFirebase = (file: Express.Multer.File) => {
+export const uploadImageToFirebase = (file: Express.Multer.File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const fileName = `${new Date().toISOString().replace(/:/g, '-')}-${file.originalname}`
+    const fileName = `${new Date().toISOString().replace(/:/g, '-')}-${file.originalname.replace(/\s+/g, '')}`
     const blob = bucket.file(fileName);
 
     const blobStream = blob.createWriteStream({

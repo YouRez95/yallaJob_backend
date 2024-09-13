@@ -19,6 +19,7 @@ const jobSchema = new mongoose.Schema<JobDocument>({
   freelancer_id: {
     type: String,
     required: true,
+    index: true
 },
 title: {
     type: String,
