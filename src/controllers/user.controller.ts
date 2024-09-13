@@ -2,9 +2,10 @@
 import catchErrors from '../utils/catchErrors';
 import appAssert from '../utils/appAssert';
 import { CONFLICT, CREATED, NOT_FOUND, OK } from '../constants/http';
-import { userDetailSchema, userIdSchema, userMobileSchema, userNameSchema } from '../utils/zod';
+import { jobIdSchema, userDetailSchema, userIdSchema, userMobileSchema, userNameSchema } from '../utils/zod';
 import UserModel from '../models/user.model';
-import { uploadImageToFirebase } from '../utils/handleImages';
+import { removeImageFromFirebase, uploadImageToFirebase } from '../utils/handleImages';
+import JobModel from '../models/job.model';
 
 
 
@@ -61,7 +62,7 @@ export const editUserHandler = catchErrors(async (req, res) => {
 
   // upload image to firebase
   if (req.file) {
-    imageUrl = await uploadImageToFirebase(req.file) as string; 
+    imageUrl = await uploadImageToFirebase(req.file) as string;
   }
 
   if (req.body.user_name) {
@@ -73,8 +74,48 @@ export const editUserHandler = catchErrors(async (req, res) => {
   }
   user.user_name = user_name || user.user_name;
   user.user_mobile = user_mobile || user.user_mobile;
-  user.user_photo = imageUrl || user.user_photo;
+
+  // Delete image from firebase if isnt default image
+  if (imageUrl && user.user_photo !== 'default.png') {
+    await removeImageFromFirebase(user.user_photo);
+    user.user_photo = imageUrl
+  }
+
+  if (imageUrl && user.user_photo === 'default.png') {
+    user.user_photo = imageUrl;
+  }
+
   await user.save()
 
   return res.status(OK).json({message: 'Account updated'});
 })
+
+
+export const toggleFavoriteHandler = catchErrors(async (req, res) => {
+  // Validate Input
+  const userId = userIdSchema.parse(req.params.user_id);
+  const jobId = jobIdSchema.parse(req.body.job_id);
+
+  // Fetch the user
+  const user = await UserModel.findOne({user_id: userId});
+  appAssert(user, NOT_FOUND, 'user not found');
+
+  // Check if the job exist
+  const job = await JobModel.findById(jobId);
+  appAssert(job, NOT_FOUND, 'job not found');
+
+  // Check if the job id already exist on favorite
+  let message;
+  const isFavorite = user.favorites.includes(job._id);
+  if (isFavorite) {
+    user.favorites.pull(jobId)
+    message = 'job removed from favorites'
+  } else {
+    user.favorites.addToSet(jobId)
+    message = 'job added to favorites'
+  }
+
+  await user.save();
+
+  return res.status(OK).json({message});
+}) 

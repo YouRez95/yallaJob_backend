@@ -13,3 +13,4 @@ export const PORT = getEnv("PORT", "8000");
 export const MONGO_LOCAL = getEnv("MONGO_LOCAL");
 export const MONGO_CLOUD = getEnv("MONGO_CLOUD");
 export const ORIGIN = getEnv("ORIGIN");
+export const STORAGE_BUCKET = getEnv("STORAGE_BUCKET");

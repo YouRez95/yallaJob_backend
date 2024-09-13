@@ -10,7 +10,7 @@ export interface UserDocument extends mongoose.Document {
   user_role: string;
   user_photo: string;
   user_rating: number;
-  favorites: mongoose.Types.Array<string>;
+  favorites: mongoose.Types.Array<mongoose.Types.ObjectId>;
 }
 
 // User Schema
@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema<UserDocument>({
   user_id: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
   user_name: {
     type: String,
@@ -45,10 +46,11 @@ const userSchema = new mongoose.Schema<UserDocument>({
     type: Number,
     default: 0
   },
-  favorites: {
-    type: [String],
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job',
     default: []
-  }
+  }]
 },  { timestamps: true })
 
 
