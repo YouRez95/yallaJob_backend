@@ -5,6 +5,7 @@ export const userIdSchema = z.string().min(6, "Invalid user id").max(128, "Inval
 export const userNameSchema = z.string().min(1, 'user name is required');
 export const userMobileSchema = z.string().min(1).max(10);
 export const jobIdSchema = z.string().length(24, "Invalid job id");
+export const freelancerIdSchema = z.string().min(6, "Invalid freelancer id").max(128, "Invalid freelancer id");
 
 
 export const userDetailSchema = z.object({
@@ -18,8 +19,9 @@ export const userDetailSchema = z.object({
 })
 
 
+
 export const jobDetailSchema = z.object({
-  freelancer_id : z.string().min(6, "Invalid freelancer id").max(128, "Invalid freelancer id"),
+  freelancer_id : freelancerIdSchema,
   title: z.string().min(1, "Title is required"),
   desc: z.string().min(10, "Description is too short. Please provide more details"),
   job_location: z.string().min(1, 'Job Location is required'),

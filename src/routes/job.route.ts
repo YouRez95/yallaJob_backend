@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addJobHandler, editJobHandler, getJobsHandler, getMyJobsHandler, getSingleJobHandler } from '../controllers/job.controller';
+import { addJobHandler, deleteJobHandler, editJobHandler, getJobsHandler, getMyJobsHandler, getSingleJobHandler, searchJobHandler } from '../controllers/job.controller';
 import upload from '../config/multer';
 
 const jobRoutes = Router();
@@ -12,6 +12,9 @@ jobRoutes.post('/add', upload.single('job_image'), addJobHandler);
 // Get all jobs
 jobRoutes.get('/', getJobsHandler);
 
+// Search Job
+jobRoutes.get('/search', searchJobHandler);
+
 // Get single job
 jobRoutes.get('/:job_id', getSingleJobHandler);
 
@@ -19,7 +22,11 @@ jobRoutes.get('/:job_id', getSingleJobHandler);
 jobRoutes.get('/freelancer/:user_id', getMyJobsHandler);
 
 // Edit Job
-jobRoutes.patch('/edit/:job_id', upload.single('job_image'), editJobHandler) 
+jobRoutes.patch('/edit/:job_id', upload.single('job_image'), editJobHandler);
+
+// Delete job
+jobRoutes.delete('/delete/:job_id/:user_id', deleteJobHandler);
+
 
 
 export default jobRoutes;

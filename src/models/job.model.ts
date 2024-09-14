@@ -27,7 +27,7 @@ title: {
 },
 desc: {
     type: String,
-    required: true
+    required: true,
 },
 job_location: {
     type: String,
@@ -56,6 +56,8 @@ job_rating: {
 }
 },  { timestamps: true })
 
+// Create index for search
+jobSchema.index({ title: 'text', desc: 'text' });
 
 const JobModel = mongoose.model<JobDocument>('Job', jobSchema)
 

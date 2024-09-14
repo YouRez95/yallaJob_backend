@@ -5,7 +5,7 @@ import UserModel from "../models/user.model";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
 import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleImages";
-import { jobDetailSchema, jobEditSchema, userIdSchema } from "../utils/zod";
+import { freelancerIdSchema, jobDetailSchema, jobEditSchema, userIdSchema } from "../utils/zod";
 
 
 export const addJobHandler = catchErrors(async (req, res) => {
@@ -110,4 +110,41 @@ export const editJobHandler = catchErrors(async (req, res) => {
 
   // Return the response
   return res.status(OK).json({message: 'Job updated'})
+})
+
+export const deleteJobHandler = catchErrors(async (req, res) => {
+  // Validate the job id
+  const jobId = req.params.job_id;
+  const validJobId = mongoose.Types.ObjectId.isValid(jobId);
+  appAssert(validJobId, BAD_REQUEST, 'Invalid Job Id');
+
+  // Validate the freelacer_id
+  const freelancer_id = freelancerIdSchema.parse(req.params.user_id);
+
+  // Find the job
+  const job = await JobModel.findById(jobId);
+  appAssert(job, NOT_FOUND, 'Job not found');
+
+  // Checking for the owner of job
+  const isMine = job.freelancer_id === freelancer_id ;
+  appAssert(isMine, UNAUTHORIZED, "Unauthorized deletion");
+
+  // Delete the job
+  await job.deleteOne();
+
+  // Return the response
+  return res.status(OK).json({message: "Deleting succesfully"});
+})
+
+
+export const searchJobHandler = catchErrors(async (req, res) => {
+  const { query } = req.query;
+
+  if (typeof query !== 'string') {
+    const jobs = await JobModel.find();
+    return res.status(OK).json(jobs);
+  }
+
+  const jobs = await JobModel.find({ $text : { $search: query}})
+  return res.status(OK).json(jobs);
 })
