@@ -18,6 +18,16 @@ export const userDetailSchema = z.object({
   })
 })
 
+export const registerSchema = z.object({
+  user_name: userNameSchema,
+  user_email: z.string().email({message: 'Invalid email address'}),
+  password: z.string().min(5),
+  user_mobile: userMobileSchema,
+  user_role: z.enum(["Freelancer", "Client"], {
+    errorMap: () => ({message: "Invalid user role, must be either 'Client' or 'Freelancer'"})
+  })
+})
+
 
 
 export const jobDetailSchema = z.object({

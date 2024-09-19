@@ -7,6 +7,7 @@ import connectToDatabase from './config/db';
 import errorHandler from './middleware/errorHandler';
 import jobRoutes from './routes/job.route';
 import userRoutes from './routes/user.route';
+import authRoutes from './routes/auth.route';
 
 
 
@@ -36,11 +37,15 @@ app.get('/', (req, res, next) => {
   })
 })
 
+
 // ROUTE FOR USER
-app.use("/api/users", userRoutes)
+app.use("/api/auth", authRoutes);
+
+// ROUTE FOR USER
+// app.use("/api/users", userRoutes);
 
 // ROUTE FOR JOBS
-app.use("/api/jobs", jobRoutes)
+// app.use("/api/jobs", jobRoutes);
 
 
 
