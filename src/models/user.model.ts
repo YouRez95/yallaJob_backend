@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { hashValue } from '../utils/bcrypt';
+import { compareValue, hashValue } from '../utils/bcrypt';
 
 // Type of the user schema
 export interface UserDocument extends mongoose.Document {
@@ -15,6 +15,7 @@ export interface UserDocument extends mongoose.Document {
   user_device?: string;
   verified: boolean;
   omitPassword(): Pick<UserDocument, 'user_name' | 'user_email' | 'user_mobile' | 'user_role' | '_id' | 'user_photo' | 'verified'>;
+  comparePassword(passwordText: string): Promise<boolean>;
 }
 
 // User Schema
@@ -78,6 +79,9 @@ userSchema.methods.omitPassword = function () {
   return user;
 }
 
+userSchema.methods.comparePassword = async function (passwordText: string) {
+  return compareValue(passwordText, this.password)
+}
 
 const UserModel = mongoose.model<UserDocument>('User', userSchema)
 

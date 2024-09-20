@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerHandler, verifyEmailHandler } from '../controllers/auth.controller';
+import { loginHandler, registerHandler, resendEmailHandler, verifyEmailHandler } from '../controllers/auth.controller';
 
 const authRoutes = Router();
 
@@ -8,7 +8,13 @@ const authRoutes = Router();
 // Register user
 authRoutes.post('/register', registerHandler);
 
+// Resend verification Email
+authRoutes.post('/verify-email/resend', resendEmailHandler)
+
 // Verify Email
 authRoutes.get('/verify-email/:code', verifyEmailHandler);
+
+// Login user
+authRoutes.get('/login', loginHandler)
 
 export default authRoutes;

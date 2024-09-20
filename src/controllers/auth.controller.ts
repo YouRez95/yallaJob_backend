@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { BAD_REQUEST, CREATED, OK } from "../constants/http";
-import { createUser, verifyEmail } from "../services/auth.service";
+import { createUser, loginUser, resendVerificationEmail, verifyEmail } from "../services/auth.service";
 import catchErrors from "../utils/catchErrors";
-import { registerSchema } from "../utils/zod";
+import { loginSchema, registerSchema, userEmailSchema } from "../utils/zod";
 import appAssert from "../utils/appAssert";
 
 
@@ -29,4 +29,28 @@ export const verifyEmailHandler = catchErrors(async (req, res) => {
 
   // Return tokens and user data
   return res.status(OK).json({user, accessToken, refreshToken})
+})
+
+
+export const loginHandler = catchErrors(async (req, res) => {
+  // Validate the body
+  const loginData = loginSchema.parse(req.body);
+  
+  // Call the service
+  const { accessToken, refreshToken, user } = await loginUser(loginData);
+
+  // Return tokens and user data
+  return res.status(OK).json({user, accessToken, refreshToken})
+})
+
+
+export const resendEmailHandler = catchErrors(async (req, res) => {
+  // Valid the body
+  const email = userEmailSchema.parse(req.body.user_email);
+
+  // Call the service
+  await resendVerificationEmail(email);
+
+  // Return the response
+  return res.status(OK).json({message: "Email verification sent"});
 })

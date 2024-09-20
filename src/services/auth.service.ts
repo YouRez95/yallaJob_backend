@@ -1,25 +1,19 @@
-import { ORIGIN } from "../constants/env";
-import { CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND } from "../constants/http";
+import { CONFLICT, FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
-import { oneYearFromNow } from "../utils/date";
-import { sendMail } from "../utils/sendMail";
-import { getVerifyEmailTemplate } from '../utils/emailTemplate';
 import SessionModel from "../models/session.model";
 import { refreshTokenOptions, signToken } from "../utils/jwt";
+import { z } from "zod";
+import { loginSchema, registerSchema } from "../utils/zod";
+import { sendVerificationEmail } from "../utils/sendVerificationEmail";
 
-type UserDataParams = {
-  user_name: string;
-  user_email: string;
-  password: string;
-  user_mobile: string;
-  user_role: "Freelancer" | "Client";
-  user_device?: string;
-}
 
-export const createUser = async (userData: UserDataParams) => {
+
+type UserRegisterParams = z.infer<typeof registerSchema>
+
+export const createUser = async (userData: UserRegisterParams) => {
   // Checking for user existence
   // TODO: checking for phone number exist
   const isExist = await UserModel.exists({user_email: userData.user_email});
@@ -28,26 +22,8 @@ export const createUser = async (userData: UserDataParams) => {
   // Create User
   const user = await UserModel.create(userData);
 
-  // Create the verification code
-  const userId = user._id;
-  const verificationCode = await VerificationCodeModel.create({
-    userId: user._id,
-    type: VerificationCodeType.EmailVerification,
-    // TODO: onWeek if the verification still exist will delete verificationcode and the user that can create another account
-    expiresAt: oneYearFromNow(),
-  })
-
   // Send verification email
-  const url = `${ORIGIN}/email/verify/${verificationCode._id}`;
-  
-  const { error } = await sendMail({
-    to: user.user_email,
-    ...getVerifyEmailTemplate(url),
-  })
-
-  if (error) {
-    console.log(error);
-  }
+  await sendVerificationEmail(user._id, user.user_email);
 }
 
 
@@ -91,4 +67,61 @@ export const verifyEmail = async (code: string) => {
     accessToken,
     refreshToken
   }
+}
+
+type UserLoginParams = z.infer<typeof loginSchema>
+
+export const loginUser = async (userData: UserLoginParams) =>{
+  // Find the user
+  const user = await UserModel.findOne({user_email: userData.user_email});
+  appAssert(user, UNAUTHORIZED, 'Invalid email or password');
+
+  // Check password
+  const isValid = await user.comparePassword(userData.password);
+  appAssert(isValid, UNAUTHORIZED, 'Invalid email or password');
+
+  // Check the account is verified
+  const isVerified = user.verified;
+  // Send that response if we need email
+  // appAssert(isVerified, FORBIDDEN, `${user.user_email} is not yet verified`);
+  appAssert(isVerified, FORBIDDEN, `Your account is not yet verified`);
+
+  // TODO: Checking if the user has already session open in other device to alert them
+
+
+  // Create the session
+  const session = await SessionModel.create({
+    userId: user._id,
+    userDevice: userData.user_device,
+  })
+
+  // sign accessToken & refreshToken
+  const refreshToken = signToken({
+    sessionId: session._id
+  }, refreshTokenOptions)
+
+  const accessToken = signToken({
+    userId: user._id,
+    sessionId: session._id
+  })
+
+  // Return user
+  return {
+    user: user.omitPassword(),
+    accessToken,
+    refreshToken
+  }
+}
+
+
+export const resendVerificationEmail = async (email: string) => {
+  // find the user
+  const user = await UserModel.findOne({user_email: email});
+  appAssert(user, UNAUTHORIZED, 'User not found');
+
+  // Check if the account already verified
+  appAssert(!user.verified, CONFLICT, 'Account already verified');
+
+  // Send the verification code
+  await sendVerificationEmail(user._id, email);
 }

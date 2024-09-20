@@ -6,26 +6,38 @@ export const userNameSchema = z.string().min(1, 'user name is required');
 export const userMobileSchema = z.string().min(1).max(10);
 export const jobIdSchema = z.string().length(24, "Invalid job id");
 export const freelancerIdSchema = z.string().min(6, "Invalid freelancer id").max(128, "Invalid freelancer id");
+export const userEmailSchema = z.string().email({message: 'Invalid email address'});
 
 
 export const userDetailSchema = z.object({
   user_id: userIdSchema,
   user_name: userNameSchema,
-  user_email: z.string().email({message: 'Invalid email address'}),
+  user_email: userEmailSchema,
   user_mobile: userMobileSchema,
   user_role: z.enum(["Freelancer", "Client"], {
     errorMap: () => ({message: "Invalid user role, must be either 'Client' or 'Freelancer'"})
   })
 })
 
+// --------------- REGISTRATION SCHEMAS -------------
+
 export const registerSchema = z.object({
   user_name: userNameSchema,
-  user_email: z.string().email({message: 'Invalid email address'}),
+  user_email: userEmailSchema,
   password: z.string().min(5),
   user_mobile: userMobileSchema,
+  user_device: z.string().optional(),
   user_role: z.enum(["Freelancer", "Client"], {
     errorMap: () => ({message: "Invalid user role, must be either 'Client' or 'Freelancer'"})
   })
+})
+
+// --------------- LOGIN SCHEMAS -------------
+
+export const loginSchema = z.object({
+  user_email: userEmailSchema,
+  password: z.string().min(5),
+  user_device: z.string().optional(),
 })
 
 
