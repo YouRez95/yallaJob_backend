@@ -4,10 +4,13 @@ import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
 import SessionModel from "../models/session.model";
-import { refreshTokenOptions, signToken } from "../utils/jwt";
+import { refreshTokenOptions, signToken, verifyToken } from "../utils/jwt";
 import { z } from "zod";
 import { loginSchema, registerSchema } from "../utils/zod";
-import { sendVerificationEmail } from "../utils/sendVerificationEmail";
+import { sendPasswordReset, sendVerificationEmail } from "../utils/sendVerificationCode";
+import { ONE_DAY_MS, thirtyDaysFromNow } from "../utils/date";
+import mongoose from "mongoose";
+import { hashValue } from "../utils/bcrypt";
 
 
 
@@ -69,6 +72,7 @@ export const verifyEmail = async (code: string) => {
   }
 }
 
+
 type UserLoginParams = z.infer<typeof loginSchema>
 
 export const loginUser = async (userData: UserLoginParams) =>{
@@ -124,4 +128,69 @@ export const resendVerificationEmail = async (email: string) => {
 
   // Send the verification code
   await sendVerificationEmail(user._id, email);
+}
+
+
+export const refreshUserAccessToken = async (refreshToken: string) => {
+  // Check if the refresh token still valid
+  const { payload } = verifyToken(refreshToken, refreshTokenOptions);
+  appAssert(payload, UNAUTHORIZED, "Invalid refresh token");
+
+  // Get the session
+  const now = Date.now()
+  const session = await SessionModel.findById(payload.sessionId);
+  appAssert(session && session.expiresAt.getTime() > now, UNAUTHORIZED, 'Session Expired');
+
+  // update the session if the session expired after 24 hours
+  const sessionNeedsRefresh = session.expiresAt.getTime() <= ONE_DAY_MS;
+  if (sessionNeedsRefresh) {
+    session.expiresAt = thirtyDaysFromNow();
+    await session.save();
+  }
+
+  // Create new Refresh token if session refreshed
+  const newRefreshToken = sessionNeedsRefresh ? signToken({ sessionId: session._id }, refreshTokenOptions) : undefined;
+  
+  // Create new Access Token 
+  const accessToken = signToken({sessionId: session._id, userId: session.userId});
+
+  // return tokens
+  return {
+    accessToken, newRefreshToken,
+  }
+
+}
+
+
+export const forgotPassword = async (email: string) => {
+  // Find the user
+  const user = await UserModel.findOne({user_email: email});
+  appAssert(user, NOT_FOUND, "User not found");
+
+  // send the verification code
+  await sendPasswordReset(user._id, email);
+}
+
+
+export const resetPassword = async ({verificationCode, newPassword}: {
+  verificationCode: mongoose.Types.ObjectId,
+  newPassword: string
+}) => {
+  // Find the verification code doc
+  const validCode = await VerificationCodeModel.findOne({
+    type: VerificationCodeType.PasswordReset,
+    _id: verificationCode,
+    expiresAt: { $gt: new Date() }
+  });
+  appAssert(validCode, NOT_FOUND, "Invalid or expired verification code");
+
+  // Update the password
+  const userUpdated = await UserModel.findByIdAndUpdate(validCode.userId, { password: await hashValue(newPassword) }, {new: true});
+  appAssert(userUpdated, INTERNAL_SERVER_ERROR, "Something wrong try again later");
+
+  // Delete the verification code
+  await validCode.deleteOne();
+
+  // Delete all sessions
+  await SessionModel.deleteMany({userId: userUpdated._id});
 }

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 // Type of the job schema
 export interface JobDocument extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
-  freelancer_id: string;
+  user_id: mongoose.Types.ObjectId;
   title: string;
   desc: string;
   job_location: string;
@@ -16,10 +16,11 @@ export interface JobDocument extends mongoose.Document {
 
 // Job Schema
 const jobSchema = new mongoose.Schema<JobDocument>({
-  freelancer_id: {
-    type: String,
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
-    index: true
+    index: true,
+    ref: 'User',
 },
 title: {
     type: String,

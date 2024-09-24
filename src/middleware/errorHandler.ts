@@ -10,6 +10,7 @@ import multer from "multer";
 const handleAppError = (res: Response, err: AppError) => {
   return res.status(err.statusCode).json({
     message: err.message,
+    errorCode: err.errorCode,
   })
 }
 

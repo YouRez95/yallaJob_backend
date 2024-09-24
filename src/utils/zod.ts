@@ -1,30 +1,19 @@
 import { z } from "zod";
 
 
-export const userIdSchema = z.string().min(6, "Invalid user id").max(128, "Invalid user id");
+// --------------------- GLOBAL SCHEMAS ----------------------------
+
 export const userNameSchema = z.string().min(1, 'user name is required');
 export const userMobileSchema = z.string().min(1).max(10);
-export const jobIdSchema = z.string().length(24, "Invalid job id");
-export const freelancerIdSchema = z.string().min(6, "Invalid freelancer id").max(128, "Invalid freelancer id");
 export const userEmailSchema = z.string().email({message: 'Invalid email address'});
+export const userPasswordSchema = z.string().min(5, "Password must be at least 5 characters");
 
-
-export const userDetailSchema = z.object({
-  user_id: userIdSchema,
-  user_name: userNameSchema,
-  user_email: userEmailSchema,
-  user_mobile: userMobileSchema,
-  user_role: z.enum(["Freelancer", "Client"], {
-    errorMap: () => ({message: "Invalid user role, must be either 'Client' or 'Freelancer'"})
-  })
-})
-
-// --------------- REGISTRATION SCHEMAS -------------
+// --------------- REGISTRATION SCHEMAS ---------------------------
 
 export const registerSchema = z.object({
   user_name: userNameSchema,
   user_email: userEmailSchema,
-  password: z.string().min(5),
+  password: userPasswordSchema,
   user_mobile: userMobileSchema,
   user_device: z.string().optional(),
   user_role: z.enum(["Freelancer", "Client"], {
@@ -32,18 +21,26 @@ export const registerSchema = z.object({
   })
 })
 
-// --------------- LOGIN SCHEMAS -------------
+// --------------- LOGIN SCHEMAS ----------------------------------
 
 export const loginSchema = z.object({
   user_email: userEmailSchema,
-  password: z.string().min(5),
+  password: userPasswordSchema,
   user_device: z.string().optional(),
 })
 
+// -------------------- UPDATE USER SCHEMA -------------------------
 
+export const updateUserSchema = z.object({
+  user_name: userNameSchema.optional(),
+  user_mobile: userMobileSchema.optional(),
+})
+
+export type UpdateUserType = z.infer<typeof updateUserSchema>
+
+// --------------- JOB ADD SCHEMAS -------------
 
 export const jobDetailSchema = z.object({
-  freelancer_id : freelancerIdSchema,
   title: z.string().min(1, "Title is required"),
   desc: z.string().min(10, "Description is too short. Please provide more details"),
   job_location: z.string().min(1, 'Job Location is required'),
@@ -54,5 +51,10 @@ export const jobDetailSchema = z.object({
                 .refine(val => val >= 50, {message: 'Price must be at least 50'})
 })
 
+export type JobDetailType = z.infer<typeof jobDetailSchema>
+
+
+// --------------- JOB EDIT SCHEMAS -------------
 
 export const jobEditSchema = jobDetailSchema.partial();
+export type JobEditType = z.infer<typeof jobEditSchema>

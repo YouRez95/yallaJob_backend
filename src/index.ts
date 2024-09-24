@@ -8,6 +8,7 @@ import errorHandler from './middleware/errorHandler';
 import jobRoutes from './routes/job.route';
 import userRoutes from './routes/user.route';
 import authRoutes from './routes/auth.route';
+import { authenticate } from './middleware/authenticate';
 
 
 
@@ -42,10 +43,10 @@ app.get('/', (req, res, next) => {
 app.use("/api/auth", authRoutes);
 
 // ROUTE FOR USER
-// app.use("/api/users", userRoutes);
+app.use("/api/users", authenticate, userRoutes);
 
 // ROUTE FOR JOBS
-// app.use("/api/jobs", jobRoutes);
+app.use("/api/jobs", authenticate, jobRoutes);
 
 
 

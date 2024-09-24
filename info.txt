@@ -1,6 +1,28 @@
-After pull the project:
-  1- enter to the backend folder by command : cd backend
-  2- npm install
-  3- change sample.env to .env
-  4- add your own environements to .env
-  5- start the project by command : npm run dev
+User Routes
+GET api/users/me: Get information about the current authenticated user ✅
+PATCH api/users/me: Update user profile information ✅
+DELETE api/users/me: Delete the user's account ❎
+
+
+
+
+Auth Routes
+POST api/auth/register: Create a new user (freelancer or client) ✅
+POST api/auth/login: Authenticate a user ✅
+POST api/auth/refresh: Refresh an expired access token ✅
+POST api/auth/logout: Revoke the user's authentication tokens ✅
+POST api/auth/forgot-password: Send a password reset link ✅
+POST api/auth/reset-password: Reset the user's password ✅
+POST /api/auth/verify-email/resend: Resend verification email ✅
+
+
+Job Routes
+POST api/jobs/add: Create a new job ✅
+GET api/jobs: Get a list of all jobs ✅
+GET api/jobs/:jobId: Get details of a specific job ✅
+PATCH api/jobs/:jobId: Update a job ✅
+DELETE api/jobs/:jobId: Delete a job ✅
+GET /api/jobs/search?query=text: Search for jobs based (title, description) ✅
+GET api/jobs/me: Get the user jobs ✅
+
+
