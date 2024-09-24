@@ -5,7 +5,6 @@ DELETE api/users/me: Delete the user's account ❎
 
 
 
-
 Auth Routes
 POST api/auth/register: Create a new user (freelancer or client) ✅
 POST api/auth/login: Authenticate a user ✅
