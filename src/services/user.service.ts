@@ -82,12 +82,22 @@ export const deleteAccount = async ({userId, password}: DeleteAccountParams) => 
   const passwordIsCorrect = await compareValue(password, user.password);
   appAssert(passwordIsCorrect, BAD_REQUEST, "Password is incorrect");
 
-  // Delete account
-  const deleted = await user.deleteOne();
-  appAssert(deleted, INTERNAL_SERVER_ERROR, "Something wrong try again later")
+  // Delete user profil
+  if (user.user_photo !== 'default.png') {
+    await removeImageFromFirebase(user.user_photo);
+  }
 
-  // Delete all jobs created by that user
-  await JobModel.deleteMany({user_id: userId});
+  // Deelete job photos
+  const jobs = await JobModel.find({user_id: userId});
+  for (const job of jobs) {
+    await removeImageFromFirebase(job.job_image);
+  }
+
+   // Delete all jobs created by that user
+   await JobModel.deleteMany({user_id: userId});
+
+  // Delete account
+  await user.deleteOne();
 
   // Delete session
   await SessionModel.deleteMany({userId});

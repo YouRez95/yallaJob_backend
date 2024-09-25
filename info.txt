@@ -1,7 +1,7 @@
 User Routes
 GET api/users/me: Get information about the current authenticated user ✅
 PATCH api/users/me: Update user profile information ✅
-DELETE api/users/me: Delete the user's account ❎
+DELETE api/users/me: Delete the user's account ✅
 
 
 

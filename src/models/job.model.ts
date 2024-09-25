@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import UserModel from './user.model';
 
 // Type of the job schema
 export interface JobDocument extends mongoose.Document {
@@ -59,6 +60,26 @@ job_rating: {
 
 // Create index for search
 jobSchema.index({ title: 'text', desc: 'text' });
+
+
+// Hooks
+jobSchema.pre('deleteOne', { document: true } ,async function (next) {
+  // Find all users who have this job in their favorites
+  await UserModel.updateMany({ favorites: this._id }, { $pull: { favorites: this._id }});
+  next()
+})
+
+jobSchema.pre('deleteMany', async function (next) {
+  const filter = this.getFilter();
+  const jobs = await this.model.find(filter);
+
+  // Loop through each job and update the UserModel
+  for (const job of jobs) {
+    await UserModel.updateMany({ favorites: job._id }, { $pull: { favorites: job._id } });
+  }
+
+  next();
+});
 
 const JobModel = mongoose.model<JobDocument>('Job', jobSchema)
 
