@@ -2,9 +2,11 @@ import mongoose from "mongoose";
 import { UpdateUserType } from "../utils/zod";
 import UserModel from "../models/user.model";
 import appAssert from "../utils/appAssert";
-import { BAD_REQUEST, NOT_FOUND } from "../constants/http";
+import { BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND } from "../constants/http";
 import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleImages";
 import JobModel from "../models/job.model";
+import { compareValue } from "../utils/bcrypt";
+import SessionModel from "../models/session.model";
 
 
 type UpdateUserParams = {
@@ -63,4 +65,30 @@ export const toggleFavoriteJobs = async ({userId, jobId}: toggleFavoriteParams) 
   return {
     message
   }
+}
+
+
+type DeleteAccountParams = {
+  userId: mongoose.Types.ObjectId;
+  password: string;
+}
+
+export const deleteAccount = async ({userId, password}: DeleteAccountParams) => {
+  // Find the user
+  const user = await UserModel.findById(userId);
+  appAssert(user, NOT_FOUND, "User Not found");
+
+  // Check password
+  const passwordIsCorrect = await compareValue(password, user.password);
+  appAssert(passwordIsCorrect, BAD_REQUEST, "Password is incorrect");
+
+  // Delete account
+  const deleted = await user.deleteOne();
+  appAssert(deleted, INTERNAL_SERVER_ERROR, "Something wrong try again later")
+
+  // Delete all jobs created by that user
+  await JobModel.deleteMany({user_id: userId});
+
+  // Delete session
+  await SessionModel.deleteMany({userId});
 }

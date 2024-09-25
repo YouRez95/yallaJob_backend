@@ -6,7 +6,7 @@ import { z } from "zod";
 export const userNameSchema = z.string().min(1, 'user name is required');
 export const userMobileSchema = z.string().min(1).max(10);
 export const userEmailSchema = z.string().email({message: 'Invalid email address'});
-export const userPasswordSchema = z.string().min(5, "Password must be at least 5 characters");
+export const userPasswordSchema = z.string({message: "Password is required"}).min(5, "Password must be at least 5 characters");
 
 // --------------- REGISTRATION SCHEMAS ---------------------------
 

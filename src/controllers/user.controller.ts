@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { BAD_REQUEST, NOT_FOUND, OK } from "../constants/http";
 import UserModel from "../models/user.model";
-import { toggleFavoriteJobs, updateUser } from "../services/user.service";
+import { deleteAccount, toggleFavoriteJobs, updateUser } from "../services/user.service";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
-import { jobEditSchema, updateUserSchema } from "../utils/zod";
+import { jobEditSchema, updateUserSchema, userPasswordSchema } from "../utils/zod";
 
 
 export const getSingleUserHandler = catchErrors(async (req, res) => {
@@ -45,4 +45,16 @@ export const toggleFavoriteHandler = catchErrors(async (req, res) => {
 
   // return the response
   res.status(OK).json({message});
+})
+
+
+export const deleteUserHandler = catchErrors(async (req, res) => {
+  // Validate the body
+  const password = userPasswordSchema.parse(req.body.password);
+
+  // Call the service
+  await deleteAccount({userId: req.userId, password});
+
+  // return the response
+  return res.status(OK).json({message: "Account deleted"});
 })
