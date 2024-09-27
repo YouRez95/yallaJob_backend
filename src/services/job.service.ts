@@ -5,6 +5,7 @@ import UserModel from "../models/user.model";
 import appAssert from "../utils/appAssert";
 import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleImages";
 import { JobDetailType, JobEditType } from "../utils/zod";
+import jobQueue from "../config/jobQueue";
 
 type CreateJobParams = {
   user_id: mongoose.Types.ObjectId;
@@ -57,7 +58,7 @@ export const editJobService = async (jobEditData: EditJobParams) => {
   }
 
   if (newImageUrl && job.job_image) {
-    await removeImageFromFirebase(job.job_image);
+    jobQueue.add({type: "deleteImage", imageUrl: job.job_image}, {priority: JobPriority.NORMAL});
   }
 
   // Update the job
@@ -87,6 +88,6 @@ export const deleteJob = async (jodDeleteData: DeleteJobParams) => {
   const jobImage = job.job_image
   const isDeleted = await job.deleteOne();
   if (isDeleted) {
-    await removeImageFromFirebase(jobImage);
+    jobQueue.add({type: "deleteImage", imageUrl: jobImage}, {priority: JobPriority.NORMAL});
   }
 }

@@ -7,10 +7,10 @@ import SessionModel from "../models/session.model";
 import { refreshTokenOptions, signToken, verifyToken } from "../utils/jwt";
 import { z } from "zod";
 import { loginSchema, registerSchema } from "../utils/zod";
-import { sendPasswordReset, sendVerificationEmail } from "../utils/sendVerificationCode";
 import { ONE_DAY_MS, thirtyDaysFromNow } from "../utils/date";
 import mongoose from "mongoose";
 import { hashValue } from "../utils/bcrypt";
+import jobQueue from "../config/jobQueue";
 
 
 
@@ -26,7 +26,8 @@ export const createUser = async (userData: UserRegisterParams) => {
   const user = await UserModel.create(userData);
 
   // Send verification email
-  await sendVerificationEmail(user._id, user.user_email);
+  jobQueue.add({type: "sendMail", key: "email", id: user._id, email: user.user_email}, {priority: JobPriority.HIGH});
+  // await sendVerificationEmail(user._id, user.user_email);
 }
 
 
@@ -127,7 +128,8 @@ export const resendVerificationEmail = async (email: string) => {
   appAssert(!user.verified, CONFLICT, 'Account already verified');
 
   // Send the verification code
-  await sendVerificationEmail(user._id, email);
+  jobQueue.add({type: "sendMail", key: "email", id: user._id, email}, {priority: JobPriority.HIGH});
+  // await sendVerificationEmail(user._id, email);
 }
 
 
@@ -168,7 +170,8 @@ export const forgotPassword = async (email: string) => {
   appAssert(user, NOT_FOUND, "User not found");
 
   // send the verification code
-  await sendPasswordReset(user._id, email);
+  jobQueue.add({type: "sendMail", key: "password", id: user._id, email}, {priority: JobPriority.HIGH});
+  // await sendPasswordReset(user._id, email);
 }
 
 

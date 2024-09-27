@@ -26,6 +26,7 @@ export const editUserHandler = catchErrors(async (req, res) => {
   const updatedUserDetail = updateUserSchema.parse(req.body);
 
   // Call the service
+  console.log("from controller file", req.file);
   await updateUser({...updatedUserDetail, image: req.file, userId: req.userId})
 
   // Return the response

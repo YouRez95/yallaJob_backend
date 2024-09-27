@@ -7,6 +7,7 @@ import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleI
 import JobModel from "../models/job.model";
 import { compareValue } from "../utils/bcrypt";
 import SessionModel from "../models/session.model";
+import jobQueue from "../config/jobQueue";
 
 
 type UpdateUserParams = {
@@ -26,7 +27,8 @@ export const updateUser = async ({userId, image, ...userData}: UpdateUserParams)
   }
 
   if (imageUrl && user.user_photo !== 'default.png') {
-    await removeImageFromFirebase(user.user_photo);
+    jobQueue.add({type: "deleteImage", imageUrl: user.user_photo})
+    // await removeImageFromFirebase(user.user_photo);
   }
 
   user.user_name = userData.user_name || user.user_name;
@@ -84,17 +86,21 @@ export const deleteAccount = async ({userId, password}: DeleteAccountParams) => 
 
   // Delete user profil
   if (user.user_photo !== 'default.png') {
-    await removeImageFromFirebase(user.user_photo);
+    // await removeImageFromFirebase(user.user_photo);
+    jobQueue.add({type: "deleteImage", imageUrl: user.user_photo})
   }
 
   // Deelete job photos
-  const jobs = await JobModel.find({user_id: userId});
+  const jobs = await JobModel.find({user_id: userId}).select('job_image');
+  const imageUrl = []
   for (const job of jobs) {
-    await removeImageFromFirebase(job.job_image);
+    imageUrl.push(job.job_image);
   }
 
-   // Delete all jobs created by that user
-   await JobModel.deleteMany({user_id: userId});
+  jobQueue.add({ type: 'deleteImage', imageUrl }, { priority: JobPriority.LOW });
+
+  // Delete all jobs created by that user
+  await JobModel.deleteMany({user_id: userId});
 
   // Delete account
   await user.deleteOne();
