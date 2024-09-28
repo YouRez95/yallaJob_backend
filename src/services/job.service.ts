@@ -3,7 +3,6 @@ import { CONFLICT, NOT_FOUND, UNAUTHORIZED } from "../constants/http";
 import JobModel from "../models/job.model";
 import UserModel from "../models/user.model";
 import appAssert from "../utils/appAssert";
-import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleImages";
 import { JobDetailType, JobEditType } from "../utils/zod";
 import jobQueue from "../config/jobQueue";
 
@@ -24,12 +23,13 @@ export const createJob = async (jobData: CreateJobParams) => {
   const existJob = await JobModel.exists({user_id: jobData.user_id, title: jobData.title});
   appAssert(!existJob, CONFLICT, 'You already have a job with this title. Please choose a different title for this job');
 
-  // Upload image to firebase
-  const job_image = await uploadImageToFirebase(jobData.image, "jobs");
-
   // Create the job
   const { image, ...rest } = jobData;
-  await JobModel.create({...rest, job_image});
+  const job = await JobModel.create({...rest, job_image: 'Processing...'});
+  
+  // Add the upload image to the jobQueue
+  jobQueue.add({type: "uploadImage", documentId: job._id ,image, folder: "jobs"}, { priority: JobPriority.HIGH });
+
 }
 
 
@@ -52,17 +52,19 @@ export const editJobService = async (jobEditData: EditJobParams) => {
 
   // Handle image
   const image = jobEditData.image;
-  let newImageUrl;
+  let tempImageUrl;
   if (image) {
-    newImageUrl = await uploadImageToFirebase(image, 'jobs');
+    // Add the upload image to the jobQueue
+    jobQueue.add({type: "uploadImage", documentId: job._id ,image, folder: "jobs"}, { priority: JobPriority.HIGH });
+    tempImageUrl = 'Processing...'
   }
 
-  if (newImageUrl && job.job_image) {
+  if (tempImageUrl && job.job_image) {
     jobQueue.add({type: "deleteImage", imageUrl: job.job_image}, {priority: JobPriority.NORMAL});
   }
 
   // Update the job
-  const finalJobData = {...jobEditData, job_image: newImageUrl};
+  const finalJobData = {...jobEditData, job_image: tempImageUrl};
   for (const [key, value] of Object.entries(finalJobData)) {
     if (value){
       (job as any)[key] = value;

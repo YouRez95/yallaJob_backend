@@ -1,11 +1,9 @@
 import mongoose from "mongoose";
-import { BAD_REQUEST, CONFLICT, CREATED, NOT_FOUND, UNAUTHORIZED, OK } from "../constants/http";
+import { BAD_REQUEST, CREATED, NOT_FOUND, OK } from "../constants/http";
 import JobModel from "../models/job.model";
-import UserModel from "../models/user.model";
 import { createJob, deleteJob, editJobService } from "../services/job.service";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
-import { uploadImageToFirebase } from "../utils/handleImages";
 import { jobDetailSchema, jobEditSchema } from "../utils/zod";
 
 

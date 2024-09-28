@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 import { UpdateUserType } from "../utils/zod";
 import UserModel from "../models/user.model";
 import appAssert from "../utils/appAssert";
-import { BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND } from "../constants/http";
-import { removeImageFromFirebase, uploadImageToFirebase } from "../utils/handleImages";
+import { BAD_REQUEST, NOT_FOUND } from "../constants/http";
 import JobModel from "../models/job.model";
 import { compareValue } from "../utils/bcrypt";
 import SessionModel from "../models/session.model";
@@ -23,12 +22,14 @@ export const updateUser = async ({userId, image, ...userData}: UpdateUserParams)
   // Update the user
   let imageUrl;
   if (image) {
-    imageUrl = await uploadImageToFirebase(image, 'users');
+    // Add the upload image to the jobQueue
+    jobQueue.add({type: "uploadImage", documentId: user._id ,image, folder: "users"}, { priority: JobPriority.HIGH });
+    imageUrl = "Processing..."
   }
 
-  if (imageUrl && user.user_photo !== 'default.png') {
+  if (imageUrl && user.user_photo !== 'default.png' && user.user_photo !== 'Failed...') {
+    // Add the remove image to the jobQueue
     jobQueue.add({type: "deleteImage", imageUrl: user.user_photo})
-    // await removeImageFromFirebase(user.user_photo);
   }
 
   user.user_name = userData.user_name || user.user_name;
