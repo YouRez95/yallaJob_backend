@@ -7,6 +7,7 @@ import JobModel from "../models/job.model";
 import { compareValue } from "../utils/bcrypt";
 import SessionModel from "../models/session.model";
 import jobQueue from "../config/jobQueue";
+import ReviewModel from "../models/review.model";
 
 
 type UpdateUserParams = {
@@ -32,6 +33,7 @@ export const updateUser = async ({userId, image, ...userData}: UpdateUserParams)
     jobQueue.add({type: "deleteImage", imageUrl: user.user_photo})
   }
 
+  // Update user data
   user.user_name = userData.user_name || user.user_name;
   user.user_mobile = userData.user_mobile || user.user_mobile;
   user.user_photo = imageUrl || user.user_photo;
@@ -91,21 +93,40 @@ export const deleteAccount = async ({userId, password}: DeleteAccountParams) => 
     jobQueue.add({type: "deleteImage", imageUrl: user.user_photo})
   }
 
-  // Deelete job photos
-  const jobs = await JobModel.find({user_id: userId}).select('job_image');
-  const imageUrl = []
-  for (const job of jobs) {
-    imageUrl.push(job.job_image);
+
+  // Find all jobs and reviews concurrently
+  const [jobs, reviews] = await Promise.all([
+    JobModel.find({user_id: userId}).select('job_image'),
+    ReviewModel.find({user_id: userId}),
+  ])
+
+  // Add job images to deletion queue
+  const imageUrl = jobs.map(job => job.job_image).filter(Boolean);
+  if (imageUrl.length > 0) {
+    jobQueue.add({ type: 'deleteImage', imageUrl }, { priority: JobPriority.LOW });
   }
 
-  jobQueue.add({ type: 'deleteImage', imageUrl }, { priority: JobPriority.LOW });
+  // Collect old review ratings for queue processing
+  const reviewsDeleted = reviews.map(review => ({
+    oldRating: review.rating,
+    jobId: review.job_id,
+  }))
 
-  // Delete all jobs created by that user
-  await JobModel.deleteMany({user_id: userId});
+  // Delete jobs, reviews, and session concurrently
+  await Promise.all([
+    JobModel.deleteMany({user_id: userId}),
+    ReviewModel.deleteMany({user_id: userId}),
+    SessionModel.deleteMany({userId}),
+  ])
 
+  // Queue review actions
+  reviewsDeleted.forEach(({oldRating, jobId}) => {
+    jobQueue.add(
+      { type: "reviewActions", jobId, oldRating, action: ReviewActionType.DeleteOldReview },
+      { priority: JobPriority.NORMAL }
+    );
+  })
+  
   // Delete account
   await user.deleteOne();
-
-  // Delete session
-  await SessionModel.deleteMany({userId});
 }

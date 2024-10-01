@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import UserModel from './user.model';
+import ReviewModel from './review.model';
 
 // Type of the job schema
 export interface JobDocument extends mongoose.Document {
@@ -12,7 +13,9 @@ export interface JobDocument extends mongoose.Document {
   job_image: string;
   job_option: string;
   job_pricing: number;
-  job_rating: number;
+  averageRating: number;
+  totalReviews: number;
+  totalRatingSum: number;
 }
 
 // Job Schema
@@ -52,10 +55,18 @@ job_pricing: {
     required: true,
     min: 50,
 },
-job_rating: {
+averageRating: {
     type: Number,
     default: 0
-}
+},
+totalReviews: {
+  type: Number,
+  default: 0,
+},
+totalRatingSum: {
+  type: Number,
+  default: 0,
+},
 },  { timestamps: true })
 
 // Create index for search
@@ -66,6 +77,7 @@ jobSchema.index({ title: 'text', desc: 'text' });
 jobSchema.pre('deleteOne', { document: true } ,async function (next) {
   // Find all users who have this job in their favorites
   await UserModel.updateMany({ favorites: this._id }, { $pull: { favorites: this._id }});
+  await ReviewModel.deleteMany({job_id: this._id})
   next()
 })
 
@@ -76,6 +88,7 @@ jobSchema.pre('deleteMany', async function (next) {
   // Loop through each job and update the UserModel
   for (const job of jobs) {
     await UserModel.updateMany({ favorites: job._id }, { $pull: { favorites: job._id } });
+    await ReviewModel.deleteMany({job_id: job._id})
   }
 
   next();

@@ -25,6 +25,11 @@ jobQueue.process(async (job) => {
     case 'sendMail':
       await sendMailJobHandler(job.data)
       break;
+
+    case 'reviewActions':
+      await updateReviewJobHandler(job.data)
+      break;
+
   default:
     console.log('unknown job type ' + {type});
   }
@@ -80,4 +85,47 @@ const imageDeletionJobHandler = async ({imageUrl}: {imageUrl: string[] | string}
   for (const image of imageUrl) {
     await removeImageFromFirebase(image);
   }
+}
+
+const updateReviewJobHandler = async ({
+  jobId,
+  newRating,
+  oldRating,
+  action
+}: {
+  jobId: mongoose.Types.ObjectId,
+  newRating: number,
+  oldRating: number,
+  action: ReviewActionType
+}) => {
+
+  const job = await JobModel.findById(jobId);
+  if (!job) {
+    throw new Error('Job not found');
+  }
+
+  switch (action) {
+    case ReviewActionType.AddNewReview:
+      // Add new review
+      job.totalReviews += 1;
+      job.totalRatingSum += newRating;
+      job.averageRating = job.totalRatingSum / job.totalReviews;
+      break;
+
+    case ReviewActionType.UpdateOldReview:
+      // Update old review
+      job.totalRatingSum = job.totalRatingSum - oldRating + newRating;
+      job.averageRating = job.totalRatingSum / job.totalReviews;
+      break;
+
+      case ReviewActionType.DeleteOldReview:
+        // Delete old review
+        job.totalReviews -= 1;
+        job.totalRatingSum -= oldRating;
+        job.averageRating = job.totalReviews === 0 ? 0 : job.totalRatingSum / job.totalReviews;
+        break;
+  }
+
+  await job.save();
+
 }

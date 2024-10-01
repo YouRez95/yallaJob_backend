@@ -58,7 +58,7 @@ authRoutes.get('/verify-email/:code', verifyEmailHandler);
 
 
 /**
- * @route GET /api/auth/login
+ * @route POST /api/auth/login
  * @desc login user
  * 
  * @request
@@ -69,7 +69,7 @@ authRoutes.get('/verify-email/:code', verifyEmailHandler);
  * - 403 Forbidden { message: "Your account is not yet verified" }
  * - 200 OK {user: object, accessToken: string, refreshToken: string}
  */
-authRoutes.get('/login', loginHandler)
+authRoutes.post('/login', loginHandler)
 
 
 

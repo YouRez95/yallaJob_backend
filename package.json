@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --files src/index.ts index.d.ts",
     "worker": "ts-node-dev --files src/utils/worker.ts",
     "build": "tsc && cp ./package.json ./dist",
-    "start": "node index.js",
+    "start": "concurrently \"npm run dev\" \"npm run worker\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,6 +21,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.5.4",
+    "concurrently": "^9.0.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
   },

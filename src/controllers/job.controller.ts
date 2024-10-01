@@ -7,6 +7,8 @@ import catchErrors from "../utils/catchErrors";
 import { jobDetailSchema, jobEditSchema } from "../utils/zod";
 
 
+const POPULATE_USER = 'user_name user_email user_mobile user_role user_photo user_rating -_id'
+
 
 export const addJobHandler = catchErrors(async (req, res) => {
   // Validate the body
@@ -24,7 +26,7 @@ export const addJobHandler = catchErrors(async (req, res) => {
 
 export const getJobsHandler = catchErrors(async (req, res) => {
   // TODO: Pagination and filter by most searched jobs and reviews
-  const jobs = await JobModel.find();
+  const jobs = await JobModel.find().populate('user_id', POPULATE_USER);
   return res.status(OK).json(jobs);
 })
 
@@ -51,7 +53,7 @@ export const getSingleJobHandler = catchErrors(async (req, res) => {
   appAssert(validJobId, BAD_REQUEST, 'Invalid Job Id');
 
   // Find the job by _id
-  const job = await JobModel.findById(jobId);
+  const job = await JobModel.findById(jobId).populate('user_id', POPULATE_USER);
   appAssert(job, NOT_FOUND, 'Job not found');
 
   // Return the response

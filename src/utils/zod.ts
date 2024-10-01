@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { z } from "zod";
 
 
@@ -7,6 +8,12 @@ export const userNameSchema = z.string().min(1, 'user name is required');
 export const userMobileSchema = z.string().min(1).max(10);
 export const userEmailSchema = z.string().email({message: 'Invalid email address'});
 export const userPasswordSchema = z.string({message: "Password is required"}).min(5, "Password must be at least 5 characters");
+export const jobIdSchema = z.string().refine(val => mongoose.isValidObjectId(val), {
+  message: "Invalid job id"
+})
+export const reviewIdSchema = z.string().refine(val => mongoose.isValidObjectId(val), {
+  message: "Invalid review id"
+})
 
 // --------------- REGISTRATION SCHEMAS ---------------------------
 
@@ -21,6 +28,9 @@ export const registerSchema = z.object({
   })
 })
 
+export type UserRegisterParams = z.infer<typeof registerSchema>
+
+
 // --------------- LOGIN SCHEMAS ----------------------------------
 
 export const loginSchema = z.object({
@@ -28,6 +38,8 @@ export const loginSchema = z.object({
   password: userPasswordSchema,
   user_device: z.string().optional(),
 })
+
+export type UserLoginParams = z.infer<typeof loginSchema>
 
 // -------------------- UPDATE USER SCHEMA -------------------------
 
@@ -58,3 +70,16 @@ export type JobDetailType = z.infer<typeof jobDetailSchema>
 
 export const jobEditSchema = jobDetailSchema.partial();
 export type JobEditType = z.infer<typeof jobEditSchema>
+
+
+
+// --------------- REVIEW SCHEMAS -------------
+
+
+
+export const reviewSchema = z.object({
+  job_id: jobIdSchema,
+  rating: z.number().min(1).max(5),
+  text: z.string().optional()
+});
+export type reviewType = z.infer<typeof reviewSchema>;

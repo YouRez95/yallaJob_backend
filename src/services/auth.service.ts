@@ -5,8 +5,7 @@ import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
 import SessionModel from "../models/session.model";
 import { refreshTokenOptions, signToken, verifyToken } from "../utils/jwt";
-import { z } from "zod";
-import { loginSchema, registerSchema } from "../utils/zod";
+import { UserLoginParams, UserRegisterParams } from "../utils/zod";
 import { ONE_DAY_MS, thirtyDaysFromNow } from "../utils/date";
 import mongoose from "mongoose";
 import { hashValue } from "../utils/bcrypt";
@@ -14,7 +13,6 @@ import jobQueue from "../config/jobQueue";
 
 
 
-type UserRegisterParams = z.infer<typeof registerSchema>
 
 export const createUser = async (userData: UserRegisterParams) => {
   // Checking for user existence
@@ -74,7 +72,7 @@ export const verifyEmail = async (code: string) => {
 }
 
 
-type UserLoginParams = z.infer<typeof loginSchema>
+
 
 export const loginUser = async (userData: UserLoginParams) =>{
   // Find the user

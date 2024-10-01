@@ -95,8 +95,8 @@ jobRoutes.get('/:job_id', getSingleJobHandler);
  * @desc update Job
  * 
  * @request
- * - Body: { title: string, desc: string, job_location: string, job_category: string,
-            job_option: string, job_pricing: number, job_image: file } -> every prop Not required
+ * - Body: { title?: string, desc?: string, job_location?: string, job_category?: string,
+            job_option?: string, job_pricing?: number, job_image?: file }
  * - Headers: { Authorization: Bearer access_token }
  * 
  * @response
@@ -115,8 +115,6 @@ jobRoutes.patch('/:job_id', upload.single('job_image'), editJobHandler);
  * @desc delete Job
  * 
  * @request
- * - Body: { title: string, desc: string, job_location: string, job_category: string,
-            job_option: string, job_pricing: number, job_image: file } -> every prop Not required
  * - Headers: { Authorization: Bearer access_token }
  * 
  * @response

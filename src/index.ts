@@ -9,6 +9,7 @@ import jobRoutes from './routes/job.route';
 import userRoutes from './routes/user.route';
 import authRoutes from './routes/auth.route';
 import { authenticate } from './middleware/authenticate';
+import reviewRoutes from './routes/review.route';
 
 
 
@@ -48,6 +49,8 @@ app.use("/api/users", authenticate, userRoutes);
 // ROUTE FOR JOBS
 app.use("/api/jobs", authenticate, jobRoutes);
 
+// ROUTE FOR REVIEWS
+app.use('/api/reviews', authenticate, reviewRoutes);
 
 
 // Error Middleware
