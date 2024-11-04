@@ -10,6 +10,8 @@ import userRoutes from './routes/user.route';
 import authRoutes from './routes/auth.route';
 import { authenticate } from './middleware/authenticate';
 import reviewRoutes from './routes/review.route';
+import JobModel from './models/job.model';
+import { getJobsHandler, searchJobHandler } from './controllers/job.controller';
 
 
 
@@ -38,6 +40,17 @@ app.get('/', (req, res, next) => {
     status: 'Healthy'
   })
 })
+
+
+app.get('/api/open/jobs', async (req, res, next) => {
+  const jobs = await JobModel.find({})
+  res.status(200).json({message: 'success', jobs})
+})
+
+
+// ROUTE FOR OPEN JOBS
+app.get('/api/open/jobs', getJobsHandler)
+app.get('/api/open/jobs/search', searchJobHandler)
 
 
 // ROUTE FOR USER
