@@ -26,7 +26,7 @@ export const addJobHandler = catchErrors(async (req, res) => {
 
 export const getJobsHandler = catchErrors(async (req, res) => {
   // TODO: Pagination and filter by most searched jobs and reviews
-  const jobs = await JobModel.find().populate('user_id', POPULATE_USER);
+  const jobs = await JobModel.find({}).populate('user_id', POPULATE_USER);
   return res.status(OK).json(jobs);
 })
 

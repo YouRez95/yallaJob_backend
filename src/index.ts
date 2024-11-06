@@ -42,12 +42,6 @@ app.get('/', (req, res, next) => {
 })
 
 
-app.get('/api/open/jobs', async (req, res, next) => {
-  const jobs = await JobModel.find({})
-  res.status(200).json({message: 'success', jobs})
-})
-
-
 // ROUTE FOR OPEN JOBS
 app.get('/api/open/jobs', getJobsHandler)
 app.get('/api/open/jobs/search', searchJobHandler)
